@@ -1,0 +1,17 @@
+[project]
+name = "retail-price-elasticity"
+version = "0.1.0"
+description = "Price elasticity and profit-maximising prices for canned tuna, Dominick's scanner data"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas==3.1.1",
+    "statsmodels==0.15.0",
+    "matplotlib==3.11.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==9.2.0"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
