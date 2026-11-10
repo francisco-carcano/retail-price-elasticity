@@ -1,0 +1,204 @@
+{
+  "brands": [
+    "StarKist",
+    "Chicken of the Sea",
+    "Bumble Bee",
+    "Dominick's"
+  ],
+  "elasticities": {
+    "StarKist": {
+      "StarKist": -2.668317120787469,
+      "Chicken of the Sea": 0.6205617649005997,
+      "Bumble Bee": 0.4424879948195482,
+      "Dominick's": -0.03176837105342183
+    },
+    "Chicken of the Sea": {
+      "StarKist": 0.6332461081833449,
+      "Chicken of the Sea": -3.1335810566481728,
+      "Bumble Bee": 0.2130093417682981,
+      "Dominick's": 0.13545067731086743
+    },
+    "Bumble Bee": {
+      "StarKist": 0.8182939912492907,
+      "Chicken of the Sea": 0.4095995463478215,
+      "Bumble Bee": -2.534407406388089,
+      "Dominick's": 0.18123455330409954
+    },
+    "Dominick's": {
+      "StarKist": 0.2421750595744257,
+      "Chicken of the Sea": -0.05405124753420101,
+      "Bumble Bee": 0.15713699809627563,
+      "Dominick's": -1.223794711969107
+    }
+  },
+  "covariance": {
+    "StarKist": {
+      "StarKist": {
+        "StarKist": 0.01058095807810859,
+        "Chicken of the Sea": -0.0035788390174571923,
+        "Bumble Bee": -0.0036964551948386504,
+        "Dominick's": 0.0002605388386832336
+      },
+      "Chicken of the Sea": {
+        "StarKist": -0.0035788390174571923,
+        "Chicken of the Sea": 0.007804888256034742,
+        "Bumble Bee": -0.002698564550222514,
+        "Dominick's": -0.00037096052892507777
+      },
+      "Bumble Bee": {
+        "StarKist": -0.0036964551948386495,
+        "Chicken of the Sea": -0.002698564550222513,
+        "Bumble Bee": 0.01174832788941253,
+        "Dominick's": 0.00023149349488359462
+      },
+      "Dominick's": {
+        "StarKist": 0.00026053883868323293,
+        "Chicken of the Sea": -0.00037096052892507847,
+        "Bumble Bee": 0.0002314934948835943,
+        "Dominick's": 0.001981279735527836
+      }
+    },
+    "Chicken of the Sea": {
+      "StarKist": {
+        "StarKist": 0.006579464303860425,
+        "Chicken of the Sea": -0.0036131546624862936,
+        "Bumble Bee": -0.0014781596689888246,
+        "Dominick's": -0.000289146905685636
+      },
+      "Chicken of the Sea": {
+        "StarKist": -0.0036131546624862897,
+        "Chicken of the Sea": 0.010805931393026009,
+        "Bumble Bee": -0.00012014212683442814,
+        "Dominick's": -0.00017021960746024288
+      },
+      "Bumble Bee": {
+        "StarKist": -0.001478159668988822,
+        "Chicken of the Sea": -0.00012014212683443261,
+        "Bumble Bee": 0.005596480456423,
+        "Dominick's": -0.0009741645470341398
+      },
+      "Dominick's": {
+        "StarKist": -0.00028914690568563554,
+        "Chicken of the Sea": -0.00017021960746024093,
+        "Bumble Bee": -0.0009741645470341393,
+        "Dominick's": 0.00165962918537632
+      }
+    },
+    "Bumble Bee": {
+      "StarKist": {
+        "StarKist": 0.01436537212326314,
+        "Chicken of the Sea": 0.0030299499173390347,
+        "Bumble Bee": -0.02135572219799766,
+        "Dominick's": -0.004542710928293771
+      },
+      "Chicken of the Sea": {
+        "StarKist": 0.0030299499173390347,
+        "Chicken of the Sea": 0.011755272686462549,
+        "Bumble Bee": -0.01630436076014397,
+        "Dominick's": -0.004930215690692059
+      },
+      "Bumble Bee": {
+        "StarKist": -0.02135572219799765,
+        "Chicken of the Sea": -0.016304360760143972,
+        "Bumble Bee": 0.06436199175578204,
+        "Dominick's": 0.013673881445409736
+      },
+      "Dominick's": {
+        "StarKist": -0.004542710928293772,
+        "Chicken of the Sea": -0.00493021569069206,
+        "Bumble Bee": 0.013673881445409743,
+        "Dominick's": 0.006663758665251849
+      }
+    },
+    "Dominick's": {
+      "StarKist": {
+        "StarKist": 0.03394602645155271,
+        "Chicken of the Sea": -0.009838208062198305,
+        "Bumble Bee": -0.013511506349937537,
+        "Dominick's": -0.0031429004363386567
+      },
+      "Chicken of the Sea": {
+        "StarKist": -0.009838208062198296,
+        "Chicken of the Sea": 0.028985013404098342,
+        "Bumble Bee": -0.011991048525466492,
+        "Dominick's": 9.261894508090812e-05
+      },
+      "Bumble Bee": {
+        "StarKist": -0.013511506349937533,
+        "Chicken of the Sea": -0.011991048525466484,
+        "Bumble Bee": 0.03880360208321663,
+        "Dominick's": 0.00129603591577007
+      },
+      "Dominick's": {
+        "StarKist": -0.003142900436338656,
+        "Chicken of the Sea": 9.261894508090585e-05,
+        "Bumble Bee": 0.0012960359157700703,
+        "Dominick's": 0.010483903168870063
+      }
+    }
+  },
+  "fit": {
+    "StarKist": {
+      "r_squared": 0.7691499557834202,
+      "holdout_r_squared": 0.3547375273056612,
+      "promo_effect": 0.006934092699759895,
+      "n_obs": 27448
+    },
+    "Chicken of the Sea": {
+      "r_squared": 0.8313027824024234,
+      "holdout_r_squared": 0.24078160945736837,
+      "promo_effect": 0.18947818796689359,
+      "n_obs": 27448
+    },
+    "Bumble Bee": {
+      "r_squared": 0.8226826458672932,
+      "holdout_r_squared": 0.5207450379680578,
+      "promo_effect": 0.10060628377031554,
+      "n_obs": 27448
+    },
+    "Dominick's": {
+      "r_squared": 0.7052289870787805,
+      "holdout_r_squared": 0.35962852345758956,
+      "promo_effect": -0.1534885945267968,
+      "n_obs": 27448
+    }
+  },
+  "baseline": {
+    "StarKist": {
+      "price": 0.8137273021084102,
+      "units": 150.03703448911597,
+      "unit_cost": 0.588325278980039,
+      "price_bounds": [
+        0.6044263421617752,
+        1.0265803374908289
+      ]
+    },
+    "Chicken of the Sea": {
+      "price": 0.8011330905918558,
+      "units": 90.24388567966045,
+      "unit_cost": 0.590019,
+      "price_bounds": [
+        0.65,
+        0.99
+      ]
+    },
+    "Bumble Bee": {
+      "price": 0.7845769542708504,
+      "units": 78.91340743034397,
+      "unit_cost": 0.54203,
+      "price_bounds": [
+        0.59,
+        0.9900000000000001
+      ]
+    },
+    "Dominick's": {
+      "price": 0.750254988029869,
+      "units": 67.71420489807473,
+      "unit_cost": 0.5509817093023255,
+      "price_bounds": [
+        0.59,
+        0.9400000000000001
+      ]
+    }
+  }
+}

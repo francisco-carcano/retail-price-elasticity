@@ -10,6 +10,7 @@ Usage: python src/demand_model.py
 """
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -17,7 +18,9 @@ import numpy as np
 import pandas as pd
 import statsmodels.formula.api as smf
 
-from build_panel import BRANDS, PANEL_PATH, _slug
+from build_panel import BRANDS, PANEL_PATH, ROOT, _slug
+
+RESULTS_PATH = ROOT / "results" / "elasticities.json"
 
 
 @dataclass(frozen=True)
@@ -25,6 +28,7 @@ class BrandFit:
     brand: str
     elasticities: pd.Series  # indexed by the brand whose price moves
     std_errors: pd.Series
+    covariance: pd.DataFrame  # of the elasticities, for simulating uncertainty
     promo_effect: float | None
     r_squared: float
     holdout_r_squared: float
@@ -54,6 +58,7 @@ def fit_brand(panel: pd.DataFrame, brand: str, control_promo: bool = True, holdo
         brand=brand,
         elasticities=full.params[list(names)].rename(index=names),
         std_errors=full.bse[list(names)].rename(index=names),
+        covariance=full.cov_params().loc[list(names), list(names)].rename(index=names, columns=names),
         promo_effect=float(full.params["promo_share"]) if control_promo else None,
         r_squared=float(full.rsquared),
         holdout_r_squared=holdout,
@@ -90,8 +95,47 @@ def summary(fits: list[BrandFit]) -> str:
     return "\n".join(lines)
 
 
+def baseline(panel: pd.DataFrame) -> dict:
+    """An average store-week per brand, plus the price range the model has actually seen.
+
+    Price and units are geometric means, the point a log-log model is centred on (a plain mean
+    of units would be pulled up by promotion spikes). Cost is the median. The bounds (5th-95th
+    percentile of observed prices) keep the optimiser inside the data instead of extrapolating
+    the constant-elasticity curve."""
+    by_brand = panel.assign(log_price=np.log(panel["price"]), log_units=np.log(panel["units"])).groupby("brand")
+    return {
+        brand: {
+            "price": float(np.exp(by_brand["log_price"].mean()[brand])),
+            "units": float(np.exp(by_brand["log_units"].mean()[brand])),
+            "unit_cost": float(by_brand["unit_cost"].median()[brand]),
+            "price_bounds": [float(by_brand["price"].quantile(0.05)[brand]),
+                             float(by_brand["price"].quantile(0.95)[brand])],
+        }
+        for brand in BRANDS
+    }
+
+
+def save_results(fits: list[BrandFit], panel: pd.DataFrame, path: Path = RESULTS_PATH) -> None:
+    """Aggregated estimates only (no raw data), so the file can be published."""
+    results = {
+        "brands": list(BRANDS),
+        "elasticities": elasticity_matrix(fits).to_dict(orient="index"),
+        "covariance": {f.brand: f.covariance.to_dict(orient="index") for f in fits},
+        "fit": {f.brand: {"r_squared": f.r_squared, "holdout_r_squared": f.holdout_r_squared,
+                          "promo_effect": f.promo_effect, "n_obs": f.n_obs} for f in fits},
+        "baseline": baseline(panel),
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(results, indent=2), encoding="utf-8")
+
+
+def load_results(path: Path = RESULTS_PATH) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 if __name__ == "__main__":
     panel = pd.read_csv(PANEL_PATH)
-    for control in (True, False):
-        print(f"\n=== Promotion control: {control} ===")
-        print(summary(fit_all(panel, control_promo=control)))
+    fits = fit_all(panel, control_promo=True)
+    save_results(fits, panel)
+    print(summary(fits))
+    print(f"Saved to {RESULTS_PATH}")
