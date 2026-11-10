@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tuna Pricing Simulator</title>
+<meta name="description" content="Move the shelf prices of four canned tuna brands and see the effect on units and category profit, from a demand model estimated on Dominick's scanner data.">
+<style>
+  :root {
+    color-scheme: light;
+    --surface-0: #f4f3ef;
+    --surface-1: #fcfcfb;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #6f6e69;
+    --rule: #e1e0d9;
+    --baseline: #c3c2b7;
+    --series-1: #2a78d6;
+    --band: rgba(42, 120, 214, 0.16);
+    --track: #e1e0d9;
+    --focus: #2a78d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --surface-0: #121211;
+      --surface-1: #1a1a19;
+      --text-primary: #f0efec;
+      --text-secondary: #c3c2b7;
+      --text-muted: #9a998f;
+      --rule: #2c2c2a;
+      --baseline: #383835;
+      --series-1: #3987e5;
+      --band: rgba(57, 135, 229, 0.22);
+      --track: #383835;
+      --focus: #3987e5;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-0: #121211;
+    --surface-1: #1a1a19;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #9a998f;
+    --rule: #2c2c2a;
+    --baseline: #383835;
+    --series-1: #3987e5;
+    --band: rgba(57, 135, 229, 0.22);
+    --track: #383835;
+    --focus: #3987e5;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--surface-0);
+    color: var(--text-primary);
+    font: 16px/1.55 ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+  main { max-width: 960px; margin: 0 auto; padding: 40px 16px 64px; }
+  header { max-width: 680px; margin-bottom: 28px; }
+  .eyebrow { font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 10px; }
+  h1 { font-size: clamp(26px, 4vw, 36px); line-height: 1.15; margin: 0 0 14px; letter-spacing: -0.01em; }
+  .lede { font-size: 17px; color: var(--text-secondary); margin: 0; }
+  h2 { font-size: 15px; margin: 0 0 4px; }
+  .sub { font-size: 13px; color: var(--text-muted); margin: 0 0 16px; }
+  a { color: var(--series-1); }
+
+  .card { background: var(--surface-1); border: 1px solid var(--rule); border-radius: 10px; padding: 20px; }
+  .grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 820px) { .grid { grid-template-columns: 340px 1fr; } }
+
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+  .kpi { padding: 16px 20px; }
+  .kpi .label { font-size: 13px; color: var(--text-secondary); margin: 0 0 6px; }
+  .kpi .value { font-size: clamp(22px, 3.4vw, 30px); font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+  .kpi .note { font-size: 12px; color: var(--text-muted); margin: 4px 0 0; }
+  @media (max-width: 560px) { .kpis { grid-template-columns: 1fr; gap: 8px; } .kpi { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; } .kpi .note { display: none; } }
+
+  .control { padding: 12px 0; border-top: 1px solid var(--rule); }
+  .control:first-of-type { border-top: 0; padding-top: 0; }
+  .control-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .control-head label { font-weight: 600; font-size: 15px; }
+  .control-head output { font-size: 15px; font-weight: 600; }
+  .control-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); }
+  input[type="range"] { width: 100%; margin: 10px 0 6px; accent-color: var(--series-1); height: 24px; }
+  input[type="range"]:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; border-radius: 4px; }
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  button {
+    font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 6px; cursor: pointer;
+    background: transparent; color: var(--text-primary); border: 1px solid var(--baseline);
+  }
+  button:hover { border-color: var(--text-secondary); }
+  button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .chart-wrap { position: relative; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  svg text { fill: var(--text-secondary); font-size: 12px; }
+  .tooltip {
+    position: absolute; pointer-events: none; background: var(--surface-1); border: 1px solid var(--rule);
+    border-radius: 6px; padding: 8px 10px; font-size: 13px; line-height: 1.4; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    white-space: nowrap; opacity: 0; transition: opacity 0.1s;
+  }
+  .tooltip strong { display: block; }
+  .tooltip span { color: var(--text-secondary); }
+  .legend { display: flex; gap: 16px; font-size: 12px; color: var(--text-secondary); margin-top: 8px; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 16px; }
+  th, td { text-align: right; padding: 8px 6px; border-top: 1px solid var(--rule); }
+  th:first-child, td:first-child { text-align: left; }
+  th { font-weight: 500; color: var(--text-secondary); font-size: 12px; border-top: 0; }
+  .table-scroll { overflow-x: auto; }
+
+  section.notes { margin-top: 32px; display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 820px) { section.notes { grid-template-columns: 1fr 1fr; } }
+  .notes ul { margin: 8px 0 0; padding-left: 18px; color: var(--text-secondary); font-size: 14px; }
+  .notes li { margin-bottom: 6px; }
+  footer { margin-top: 32px; font-size: 13px; color: var(--text-muted); }
+  .error { color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">Pricing case · Dominick's Finer Foods scanner data</p>
+    <h1>Is the store brand of canned tuna priced too low?</h1>
+    <p class="lede">A demand model estimated on 93 Chicago supermarkets says yes: shoppers of the store brand barely react to its price, and the few who leave move to brands with a better margin. Move the prices below to see the trade-off.</p>
+  </header>
+
+  <div class="kpis" aria-live="polite">
+    <div class="card kpi"><p class="label">Category profit</p><p class="value" id="kpi-profit">–</p><p class="note" id="kpi-profit-note">vs typical prices</p></div>
+    <div class="card kpi"><p class="label">Store brand units</p><p class="value" id="kpi-pl-units">–</p><p class="note">vs typical prices</p></div>
+    <div class="card kpi"><p class="label">Category units</p><p class="value" id="kpi-units">–</p><p class="note">all four brands</p></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Shelf prices</h2>
+      <p class="sub">6 oz can, average store-week. Each slider covers the range of prices seen in the data.</p>
+      <div id="controls"></div>
+      <div class="presets">
+        <button type="button" id="preset-typical">Typical prices</button>
+        <button type="button" id="preset-test">Store brand at $0.89</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Category profit as the store-brand price moves</h2>
+      <p class="sub">Other brands held at the prices set in the price panel. Click the chart to set the store-brand price.</p>
+      <div class="chart-wrap" id="chart-wrap">
+        <svg id="chart" role="img" aria-label="Line chart of category profit change against the store-brand price"></svg>
+        <div class="tooltip" id="tooltip"></div>
+      </div>
+      <div class="legend">
+        <span><i style="background: var(--series-1); height: 2px; vertical-align: 3px;"></i>Model estimate</span>
+        <span><i style="background: var(--band);"></i>90% interval from elasticity uncertainty</span>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Brand</th><th>Price</th><th>Units vs typical</th><th>Profit per store-week</th></tr></thead>
+          <tbody id="brand-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <section class="notes">
+    <div class="card">
+      <h2>How to read it</h2>
+      <ul>
+        <li>Raising only the store brand from $0.75 towards $0.85–0.94 lifts category profit in the model, with the whole 90% interval above zero.</li>
+        <li>The best price sits at the top of the range ever charged, so the honest recommendation is a <strong>store-group test</strong>, not a chain-wide change.</li>
+        <li>Raising all four brands looks far more profitable here, but that is what the model cannot judge: see the limits.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>Limits</h2>
+      <ul>
+        <li>Price variation comes mostly from temporary promotions; shoppers stock up on deals, which a permanent price change does not trigger.</li>
+        <li>The model does not see shoppers switching store, or the traffic a cheap staple brings in.</li>
+        <li>Costs come from the dataset's margin field, based on average inventory cost. Data are from the 1990s.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    Method, code and full results: <a href="https://github.com/francisco-carcano/retail-price-elasticity">github.com/francisco-carcano/retail-price-elasticity</a>.
+    Data: Dominick's Finer Foods, courtesy of the James M. Kilts Center for Marketing, University of Chicago Booth School of Business.
+  </footer>
+</main>
+
+<script>
+(async function () {
+  const PL_LABEL = " (store brand)";
+  let data;
+  try {
+    data = await (await fetch("demo_data.json")).json();
+  } catch (err) {
+    document.getElementById("controls").innerHTML = '<p class="error">Could not load the model data.</p>';
+    return;
+  }
+  const n = data.brands.length;
+  const pl = data.brands.indexOf(data.private_label);
+  const prices = data.base_price.slice();
+
+  // Demand: units_i = U_i * exp(sum_j e_ij * ln(p_j / P_j)); profit = sum_i (p_i - c_i) * units_i.
+  function units(p, e = data.elasticities) {
+    const logRatio = p.map((x, j) => Math.log(x / data.base_price[j]));
+    return data.base_units.map((u, i) => u * Math.exp(logRatio.reduce((s, r, j) => s + e[i][j] * r, 0)));
+  }
+  function profit(p, e) {
+    return units(p, e).reduce((s, u, i) => s + (p[i] - data.unit_cost[i]) * u, 0);
+  }
+  const baseProfit = profit(data.base_price);
+  const baseUnits = units(data.base_price);
+  const baseProfitDraws = data.draws.map(e => profit(data.base_price, e));
+
+  const money = x => "$" + x.toFixed(2);
+  const pct = x => (Math.abs(x) < 0.0005 ? "0.0%" : (x >= 0 ? "+" : "−") + Math.abs(x * 100).toFixed(1) + "%");
+  const pct0 = x => (Math.abs(x) < 0.005 ? "0%" : (x >= 0 ? "+" : "−") + Math.abs(x * 100).toFixed(0) + "%");
+  const label = i => data.brands[i] + (i === pl ? PL_LABEL : "");
+
+  // Controls
+  const controls = document.getElementById("controls");
+  const sliders = data.brands.map((b, i) => {
+    const id = "price-" + i;
+    const div = document.createElement("div");
+    div.className = "control";
+    div.innerHTML =
+      `<div class="control-head"><label for="${id}">${label(i)}</label><output id="${id}-out" for="${id}"></output></div>` +
+      `<input type="range" id="${id}" min="${data.lower[i]}" max="${data.upper[i]}" step="0.01" value="${prices[i]}">` +
+      `<div class="control-meta"><span>${money(data.lower[i])}</span><span>typical ${money(data.base_price[i])}</span><span>${money(data.upper[i])}</span></div>`;
+    controls.appendChild(div);
+    const input = div.querySelector("input");
+    input.addEventListener("input", () => { prices[i] = +input.value; render(); });
+    return input;
+  });
+  function setPrices(next) {
+    next.forEach((p, i) => { prices[i] = p; sliders[i].value = p; });
+    render();
+  }
+  document.getElementById("preset-typical").onclick = () => setPrices(data.base_price.slice());
+  document.getElementById("preset-test").onclick = () => setPrices(data.base_price.map((p, i) => i === pl ? 0.89 : p));
+
+  // Chart
+  const svg = document.getElementById("chart");
+  const wrap = document.getElementById("chart-wrap");
+  const tooltip = document.getElementById("tooltip");
+  const NS = "http://www.w3.org/2000/svg";
+  const xs = Array.from({ length: 71 }, (_, k) => data.lower[pl] + (data.upper[pl] - data.lower[pl]) * k / 70);
+  let geom = null;
+
+  function quantile(sorted, q) {
+    const pos = (sorted.length - 1) * q, lo = Math.floor(pos), hi = Math.ceil(pos);
+    return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
+  }
+  function curve() {
+    return xs.map(x => {
+      const p = prices.slice(); p[pl] = x;
+      const draws = data.draws.map((e, d) => profit(p, e) / baseProfitDraws[d] - 1).sort((a, b) => a - b);
+      return { x, y: profit(p) / baseProfit - 1, lo: quantile(draws, 0.05), hi: quantile(draws, 0.95) };
+    });
+  }
+  function el(name, attrs, parent) {
+    const node = document.createElementNS(NS, name);
+    for (const k in attrs) node.setAttribute(k, attrs[k]);
+    parent.appendChild(node);
+    return node;
+  }
+  function drawChart(points) {
+    const W = Math.max(wrap.clientWidth, 280), H = W < 480 ? 240 : 280;
+    const m = { top: 12, right: 12, bottom: 34, left: 48 };
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = "";
+    let yMin = Math.min(0, ...points.map(p => p.lo)), yMax = Math.max(0, ...points.map(p => p.hi));
+    const pad = (yMax - yMin) * 0.08; yMin -= pad; yMax += pad;
+    const sx = x => m.left + (x - xs[0]) / (xs[xs.length - 1] - xs[0]) * (W - m.left - m.right);
+    const sy = y => m.top + (yMax - y) / (yMax - yMin) * (H - m.top - m.bottom);
+    geom = { sx, sy, m, W, H, points };
+
+    const step = niceStep((yMax - yMin) / 5);
+    for (let t = Math.ceil(yMin / step) * step; t <= yMax; t += step) {
+      el("line", { x1: m.left, x2: W - m.right, y1: sy(t), y2: sy(t), stroke: Math.abs(t) < 1e-9 ? "var(--baseline)" : "var(--rule)", "stroke-width": 1 }, svg);
+      el("text", { x: m.left - 8, y: sy(t) + 4, "text-anchor": "end" }, svg).textContent = (t > 0 ? "+" : "") + Math.round(t * 100) + "%";
+    }
+    const tick = W < 480 ? 0.1 : 0.05;
+    for (let x = Math.ceil(xs[0] / tick) * tick; x <= xs[xs.length - 1] + 1e-9; x += tick) {
+      el("text", { x: sx(x), y: H - 12, "text-anchor": "middle" }, svg).textContent = money(x);
+    }
+    const band = points.map(p => `${sx(p.x)},${sy(p.hi)}`).concat(points.slice().reverse().map(p => `${sx(p.x)},${sy(p.lo)}`));
+    el("polygon", { points: band.join(" "), fill: "var(--band)" }, svg);
+    el("polyline", { points: points.map(p => `${sx(p.x)},${sy(p.y)}`).join(" "), fill: "none", stroke: "var(--series-1)", "stroke-width": 2, "stroke-linejoin": "round" }, svg);
+
+    const typicalX = sx(data.base_price[pl]);
+    el("line", { x1: typicalX, x2: typicalX, y1: m.top, y2: H - m.bottom, stroke: "var(--baseline)", "stroke-dasharray": "3 3" }, svg);
+    el("text", { x: typicalX + 4, y: m.top + 10, "text-anchor": "start" }, svg).textContent = "typical";
+
+    const current = profit(prices) / baseProfit - 1;
+    el("circle", { cx: sx(prices[pl]), cy: sy(current), r: 5, fill: "var(--series-1)", stroke: "var(--surface-1)", "stroke-width": 2 }, svg);
+    geom.cross = el("line", { y1: m.top, y2: H - m.bottom, stroke: "var(--text-muted)", "stroke-width": 1, opacity: 0 }, svg);
+    geom.dot = el("circle", { r: 4, fill: "var(--surface-1)", stroke: "var(--series-1)", "stroke-width": 2, opacity: 0 }, svg);
+  }
+  function niceStep(raw) {
+    const p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+    return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p;
+  }
+  function nearest(clientX) {
+    const rect = svg.getBoundingClientRect();
+    const x = (clientX - rect.left) * geom.W / rect.width;
+    let best = geom.points[0];
+    for (const p of geom.points) if (Math.abs(geom.sx(p.x) - x) < Math.abs(geom.sx(best.x) - x)) best = p;
+    return { p: best, scale: rect.width / geom.W };
+  }
+  svg.addEventListener("pointermove", ev => {
+    const { p, scale } = nearest(ev.clientX);
+    const cx = geom.sx(p.x), cy = geom.sy(p.y);
+    geom.cross.setAttribute("x1", cx); geom.cross.setAttribute("x2", cx); geom.cross.setAttribute("opacity", 1);
+    geom.dot.setAttribute("cx", cx); geom.dot.setAttribute("cy", cy); geom.dot.setAttribute("opacity", 1);
+    tooltip.innerHTML = `<strong>Store brand at ${money(p.x)}</strong>Category profit ${pct(p.y)}<br><span>90% interval ${pct(p.lo)} to ${pct(p.hi)}</span>`;
+    const left = cx * scale, tw = tooltip.offsetWidth;
+    tooltip.style.left = Math.min(Math.max(left - tw / 2, 0), wrap.clientWidth - tw) + "px";
+    tooltip.style.top = Math.max(cy * scale - tooltip.offsetHeight - 14, 0) + "px";
+    tooltip.style.opacity = 1;
+  });
+  svg.addEventListener("pointerleave", () => {
+    tooltip.style.opacity = 0;
+    if (geom.cross) { geom.cross.setAttribute("opacity", 0); geom.dot.setAttribute("opacity", 0); }
+  });
+  svg.addEventListener("click", ev => {
+    const { p } = nearest(ev.clientX);
+    const next = prices.slice(); next[pl] = Math.round(p.x * 100) / 100;
+    setPrices(next);
+  });
+
+  function render() {
+    const u = units(prices);
+    const prof = profit(prices);
+    const totalBase = baseUnits.reduce((a, b) => a + b, 0), total = u.reduce((a, b) => a + b, 0);
+    const draws = data.draws.map((e, d) => profit(prices, e) / baseProfitDraws[d] - 1).sort((a, b) => a - b);
+    document.getElementById("kpi-profit").textContent = pct(prof / baseProfit - 1);
+    document.getElementById("kpi-profit-note").textContent = `90% interval ${pct(quantile(draws, 0.05))} to ${pct(quantile(draws, 0.95))}`;
+    document.getElementById("kpi-pl-units").textContent = pct0(u[pl] / baseUnits[pl] - 1);
+    document.getElementById("kpi-units").textContent = pct0(total / totalBase - 1);
+    sliders.forEach((s, i) => { document.getElementById(s.id + "-out").textContent = money(prices[i]); });
+    document.getElementById("brand-table").innerHTML = data.brands.map((b, i) =>
+      `<tr><td>${label(i)}</td><td>${money(prices[i])}</td><td>${pct0(u[i] / baseUnits[i] - 1)}</td><td>${money((prices[i] - data.unit_cost[i]) * u[i])}</td></tr>`
+    ).join("") + `<tr><td><strong>Category</strong></td><td></td><td>${pct0(total / totalBase - 1)}</td><td><strong>${money(prof)}</strong></td></tr>`;
+    drawChart(curve());
+  }
+  window.addEventListener("resize", () => drawChart(curve()));
+  render();
+})();
+</script>
+</body>
+</html>
