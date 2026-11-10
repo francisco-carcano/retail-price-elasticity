@@ -29,7 +29,7 @@ Letting the optimiser move all four prices at once gives +36% category profit wi
 These three gaps matter much less when only the store brand moves, because the national brands stay where shoppers expect them.
 
 ## How it works
-1. **Data.** Dominick's Finer Foods weekly scanner data (1990s): units, shelf price, gross margin and promotion flags per product, store and week. Segment: chunk light tuna in 6–6.5 oz single cans, aggregated to four brands. 109,792 brand × store × week rows, 93 stores, 339 weeks.
+1. **Data.** Dominick's Finer Foods weekly scanner data (1990s): units, shelf price, gross margin and promotion flags per product, store and week. Segment: chunk light tuna in 6–6.5 oz single cans, aggregated to four brands. The store brand groups the "DOM" and "HH" labels, which share Dominick's barcode manufacturer prefix. 109,792 brand × store × week rows, 93 stores, 339 weeks.
 2. **Demand model.** For each brand, a log-log regression of units on all four prices, so each coefficient is an elasticity:
    `log(units_i) = store effect + week effect + Σ_j e_ij · log(price_j) + b · promo_share_i`.
    Store effects absorb size and location; week effects absorb seasonality and chain-wide events such as Lent. Standard errors are clustered by week, because prices are set chain-wide each week.
